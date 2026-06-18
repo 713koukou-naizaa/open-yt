@@ -7,7 +7,7 @@
   - CLI : Go
   - GUI : Qt, C++
 
-## Iner-workings
+## Inner-workings
 
 - Backend uses Youtube to get the content only (videos, subscriptions...)
 - Content exposed via API
