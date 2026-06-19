@@ -1,11 +1,10 @@
 # Open-yt
 
+Open-yt is a modern lightweight youtube client available both in CLI and GUI mode.
+
 ## Components
 
-- Backend : Go
-- Frontend :
-  - CLI : Go
-  - GUI : Qt, C++
+The Open-yt client is composed of a backend in Go, and 2 frontends : a CLI one in Go, and a GUI one in Qt with C++ 
 
 ## Inner-workings
 
