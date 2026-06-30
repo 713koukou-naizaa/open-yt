@@ -30,6 +30,7 @@ Implement little-by-little each components from simplest to more complex ones
 - Get videos from subscriptions feed
 - Get subscriptions
 - Search videos from search term from subscription
+- Dynamic filter in interactive list (index and content)
 
 ### Third MVP - Full CLI version
 
