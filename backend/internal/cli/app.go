@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/charmbracelet/bubbletea"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"open-yt/internal/config"
 	"open-yt/internal/player"
 	"open-yt/internal/youtube"
+	"os"
 )
 
 type App struct {
@@ -20,7 +22,7 @@ func NewApp(cfg config.Config) App {
 
 func (a App) Run(args []string) error {
 	if len(args) == 0 {
-		return a.printHelp()
+		return a.runInteractive()
 	}
 
 	switch args[0] {
@@ -33,6 +35,37 @@ func (a App) Run(args []string) error {
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
+}
+
+func (a App) runInteractive() error {
+	p := tea.NewProgram(newMenuModel())
+	finalModel, err := p.Run()
+	if err != nil {
+		return fmt.Errorf("error running interactive menu: %w", err)
+	}
+
+	m := finalModel.(menuModel)
+
+	// Create a new scanner to read from stdin
+	scanner := bufio.NewScanner(os.Stdin)
+
+	switch m.selected {
+	case "Search":
+		fmt.Print("Enter search query: ")
+		if scanner.Scan() {
+			query := scanner.Text()
+			return a.runSearch(strings.Fields(query))
+		}
+	case "Play":
+		fmt.Print("Enter YouTube URL or video ID: ")
+		if scanner.Scan() {
+			url := scanner.Text()
+			return a.runPlay([]string{url})
+		}
+	case "Quit":
+		return nil
+	}
+	return nil
 }
 
 func (a App) runSearch(args []string) error {
@@ -55,6 +88,11 @@ func (a App) runSearch(args []string) error {
 
 	// State of model when program exits
 	m := finalModel.(YTSearchModel)
+
+	// If user chose to go back, re-run the main interactive menu
+	if m.back {
+		return a.runInteractive()
+	}
 
 	if m.selectedVideo != nil {
 		return a.playVideo(m.selectedVideo.URL)

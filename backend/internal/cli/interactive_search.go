@@ -11,7 +11,8 @@ import (
 type YTSearchModel struct {
 	returnedVideos   []youtube.YTVideo // list of returned videos
 	cursorPosition   int  // video at which cursor is pointing at
-	selectedVideo	 *youtube.YTVideo // selected video
+	selectedVideo *youtube.YTVideo // selected video
+	back          bool             // if user wants to go back
 }
 
 func newYTSearchModel(returnedVideos []youtube.YTVideo) YTSearchModel {
@@ -36,7 +37,12 @@ func (m YTSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Which key
 		switch msg.String() {
 			// Exit program
-			case "ctrl+c", "q":
+			case "ctrl+c":
+				return m, tea.Quit
+
+			// Go back to previous menu
+			case "q", "b":
+				m.back = true
 				return m, tea.Quit
 
 			// Move cursor up
@@ -65,7 +71,7 @@ func (m YTSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders UI
 // Called every time model is updated
 func (m YTSearchModel) View() string {
-	s := "Select a video to play:\n\n"
+	s := "Select a video to play:\n"
 
 	// For each returned video
 	for i, video := range m.returnedVideos {
@@ -83,7 +89,7 @@ func (m YTSearchModel) View() string {
 		s += fmt.Sprintf("%s [%s] %s\n", cursor, durationStr, video.Title)
 	}
 
-	s += "\n(arrows or j/k to move, enter to select, q or CTRL+C to quit)\n"
+	s += "\n(arrows or j/k to move, enter to select, q/b to go back, CTRL+C to quit)\n"
 
 	return s
 }
