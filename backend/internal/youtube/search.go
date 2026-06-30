@@ -7,8 +7,8 @@ import (
 	"os/exec"
 )
 
-func Search(query string, maxResults int, YTDLPCommand string) ([]YTVideo, error) {
-	searchQuery := fmt.Sprintf("ytsearch%d:%s", maxResults, query)
+func Search(query string, paginationThreshold int, YTDLPCommand string) ([]YTVideo, error) {
+	searchQuery := fmt.Sprintf("ytsearch%d:%s", paginationThreshold, query)
 	cmd := exec.Command(YTDLPCommand, "--flat-playlist", "--dump-json", searchQuery)
 
 	stdout, err := cmd.StdoutPipe()

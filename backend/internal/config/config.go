@@ -12,26 +12,26 @@ type Player struct {
 }
 
 type Config struct {
-	Player       Player
-	YTDLPCommand string
-	MaxResults   int
-	CookiesFromBrowser string
+	Player       		Player
+	YTDLPCommand 		string
+	PaginationThreshold int
+	CookiesFromBrowser  string
 }
 
 func Default() Config {
 	defaultVolume := 35
 	return Config{
 		Player: Player{
-			Command:     "mpv",
-			KeepOpen:    "yes",
+			Command: "mpv",
+			KeepOpen: "yes",
 			ForceWindow: "yes",
-			Volume:      &defaultVolume,
-			Fullscreen:  "yes",
+			Volume: &defaultVolume,
+			Fullscreen: "yes",
 			WindowMaximized: "yes",
-			YTDLFormat:  "bestvideo[height<=720]+bestaudio/best[height<=720]",
+			YTDLFormat: "bestvideo[height<=720]+bestaudio/best[height<=720]",
 		},
 		YTDLPCommand: "yt-dlp",
-		MaxResults:   10,
+		PaginationThreshold: 10,
 		CookiesFromBrowser: "brave", // e.g., "firefox", "chrome", "brave"
 	}
 }

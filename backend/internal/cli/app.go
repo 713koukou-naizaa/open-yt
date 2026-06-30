@@ -87,7 +87,7 @@ func (a App) runSearch(args []string) error {
 
 func (a App) runSubscriptionsFeed() error {
 	fmt.Println("Fetching videos from your subscriptions feed...")
-	videos, err := youtube.SubscriptionsFeed(a.config.MaxResults, a.config.YTDLPCommand, a.config.CookiesFromBrowser)
+	videos, err := youtube.SubscriptionsFeed(a.config.PaginationThreshold, a.config.YTDLPCommand, a.config.CookiesFromBrowser)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (a App) handleSearchResult(m YTSearchModel) error {
 // Helper to abstract video searching logic
 // Returns a slice of videos or a nil slice if no videos were found
 func (a App) searchVideos(query string) ([]youtube.YTVideo, error) {
-	videos, err := youtube.Search(query, a.config.MaxResults, a.config.YTDLPCommand)
+	videos, err := youtube.Search(query, a.config.PaginationThreshold, a.config.YTDLPCommand)
 	if err != nil {
 		return nil, err
 	}
