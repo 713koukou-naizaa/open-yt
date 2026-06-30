@@ -1,0 +1,23 @@
+# Binaries and build artifacts
+# The Makefile places the compiled binary in the /bin/ directory.
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go dependency directory
+# It's standard practice to let Go modules manage dependencies rather than
+# checking in the vendor folder.
+/vendor/
+
+# Go workspace files
+go.work
+go.work.sum
+
+# IDE and editor configuration
+.idea/
+.vscode/
