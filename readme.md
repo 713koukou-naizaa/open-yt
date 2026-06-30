@@ -8,15 +8,10 @@ The Open-yt client is composed of a backend in Go, and 2 frontends : a CLI one i
 
 ## Inner-workings
 
-- Backend uses Youtube to get the content only (videos, subscriptions...)
+- Backend uses yt-dlp to get the content only (videos, subscriptions...), and MPV to stream videos
 - Content exposed via API
 - CLI Frontend allows features like search, watch etc... but from CLI
 - Both Frontends get content from the same API
-
-## Potential resources
-
-- MPV for client-side reading ?
-- yt-dlp for streaming ?
 
 ## Plan
 
@@ -26,12 +21,15 @@ Implement little-by-little each components from simplest to more complex ones
 
 #### Features
 
-- Search
-- Read video
+- Search videos from search term
+- Play video from link/ID
 
 ### Second MVP - Advanced CLI version
 
-abc
+- Pagination in searches
+- Get videos from subscriptions feed
+- Get subscriptions
+- Search videos from search term from subscription
 
 ### Third MVP - Full CLI version
 
