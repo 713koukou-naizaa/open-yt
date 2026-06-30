@@ -2,6 +2,7 @@ package youtube
 
 // Holds information about youtube video
 type YTVideo struct {
+	ID          string
 	Title       string
 	URL         string
 	Description string
@@ -21,6 +22,7 @@ type VideoThumbnail struct {
 // Used to unmarshal the JSON output from yt-dlp command
 // JSON tags correspond to fields in yt-dlp JSON output
 type YTDLPVideo struct {
+	ID          string           	  `json:"id"`
 	Title       string           	  `json:"title"`
 	URL         string           	  `json:"webpage_url"`
 	Description string           	  `json:"description"`

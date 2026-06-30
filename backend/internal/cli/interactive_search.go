@@ -86,7 +86,11 @@ func (m YTSearchModel) View() string {
 		durationStr := fmt.Sprintf("%d:%02d", durationMinutes, durationSeconds)
 
 		// Render video row
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, durationStr, video.Title)
+		if video.Channel != "" {
+			s += fmt.Sprintf("%s [%s] [%s] %s\n", cursor, video.Channel, durationStr, video.Title)
+		} else {
+			s += fmt.Sprintf("%s [%s] %s\n", cursor, durationStr, video.Title)
+		}
 	}
 
 	s += "\n(arrows or j/k to move, enter to select, q/b to go back, CTRL+C to quit)\n"

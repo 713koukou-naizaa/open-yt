@@ -52,6 +52,7 @@ func newYTVideoFromYTDLPVideo(YTDLPVideo YTDLPVideo) YTVideo {
 	}
 
 	return YTVideo{
+		ID:          YTDLPVideo.ID,
 		Title:       YTDLPVideo.Title,
 		URL:         YTDLPVideo.URL,
 		Description: YTDLPVideo.Description,
