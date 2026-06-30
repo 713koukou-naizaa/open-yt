@@ -62,6 +62,8 @@ func (a App) runInteractive() error {
 			url := scanner.Text()
 			return a.runPlay([]string{url})
 		}
+	case "Subscriptions feed":
+		return a.runSubscriptionsFeed()
 	case "Quit":
 		return nil
 	}
@@ -80,25 +82,22 @@ func (a App) runSearch(args []string) error {
 		return err
 	}
 
-	p := tea.NewProgram(newYTSearchModel(videos))
-	finalModel, err := p.Run()
+	return a.runInteractiveVideoList(videos)
+}
+
+func (a App) runSubscriptionsFeed() error {
+	fmt.Println("Fetching videos from your subscriptions feed...")
+	videos, err := youtube.SubscriptionsFeed(a.config.MaxResults, a.config.YTDLPCommand, a.config.CookiesFromBrowser)
 	if err != nil {
-		return fmt.Errorf("error running interactive search: %w", err)
+		return err
+	}
+	if len(videos) == 0 {
+		fmt.Println("No videos found in your subscriptions feed.")
+		fmt.Println("Please ensure you have configured yt-dlp with cookies for YouTube.")
+		return nil
 	}
 
-	// State of model when program exits
-	m := finalModel.(YTSearchModel)
-
-	// If user chose to go back, re-run the main interactive menu
-	if m.back {
-		return a.runInteractive()
-	}
-
-	if m.selectedVideo != nil {
-		return a.playVideo(m.selectedVideo.URL)
-	}
-
-	return nil
+	return a.runInteractiveVideoList(videos)
 }
 
 func (a App) runPlay(args []string) error {
@@ -109,6 +108,37 @@ func (a App) runPlay(args []string) error {
 	video := args[0]
 
 	return a.playVideo(video)
+}
+
+// Displays list of videos and handles user selection
+func (a App) runInteractiveVideoList(videos []youtube.YTVideo) error {
+	p := tea.NewProgram(newYTSearchModel(videos))
+	finalModel, err := p.Run()
+	if err != nil {
+		return fmt.Errorf("error running interactive video list: %w", err)
+	}
+
+	m := finalModel.(YTSearchModel)
+
+	// Delegate to result handler
+	return a.handleSearchResult(m)
+}
+
+// Processes result from YTSearchModel bubble
+func (a App) handleSearchResult(m YTSearchModel) error {
+	// If user chose to go back, re-run main interactive menu
+	if m.back {
+		return a.runInteractive()
+	}
+
+	if m.selectedVideo != nil {
+		err := a.playVideo(m.selectedVideo.URL)
+		if err != nil {
+			return err
+		}
+		return a.runInteractive() // Return to main menu after video finishes
+	}
+	return nil
 }
 
 // Helper to abstract video searching logic

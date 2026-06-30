@@ -15,6 +15,7 @@ type Config struct {
 	Player       Player
 	YTDLPCommand string
 	MaxResults   int
+	CookiesFromBrowser string
 }
 
 func Default() Config {
@@ -31,5 +32,6 @@ func Default() Config {
 		},
 		YTDLPCommand: "yt-dlp",
 		MaxResults:   10,
+		CookiesFromBrowser: "brave", // e.g., "firefox", "chrome", "brave"
 	}
 }

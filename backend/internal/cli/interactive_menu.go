@@ -14,7 +14,7 @@ type menuModel struct {
 
 func newMenuModel() menuModel {
 	return menuModel{
-		choices: []string{"Search", "Play", "Quit"},
+		choices: []string{"Search", "Play", "Subscriptions feed", "Quit"},
 	}
 }
 

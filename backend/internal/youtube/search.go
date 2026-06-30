@@ -23,32 +23,10 @@ func Search(query string, maxResults int, YTDLPCommand string) ([]YTVideo, error
 	var videos []YTVideo
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
-		var YTDLPVid YTDLPVideo
-		line := scanner.Bytes()
-
-		// If yt-dlp outputs are non-json lines
-		if err := json.Unmarshal(line, &YTDLPVid); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal json: %w\nJSON: %s", err, string(line))
+		var YTDLPVideo YTDLPVideo
+		if err := json.Unmarshal(scanner.Bytes(), &YTDLPVideo); err == nil {
+			videos = append(videos, newYTVideoFromYTDLPVideo(YTDLPVideo))
 		}
-
-		var thumbnails []VideoThumbnail
-		for _, t := range YTDLPVid.Thumbnails {
-			thumbnails = append(thumbnails, VideoThumbnail{
-				URL:    t.URL,
-				Height: t.Height,
-				Width:  t.Width,
-			})
-		}
-
-		videos = append(videos, YTVideo{
-			Title:       YTDLPVid.Title,
-			URL:         YTDLPVid.URL,
-			Description: YTDLPVid.Description,
-			Duration:    YTDLPVid.Duration,
-			Channel:     YTDLPVid.Channel,
-			ViewCount:   YTDLPVid.ViewCount,
-			Thumbnails:  thumbnails,
-		})
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -60,4 +38,26 @@ func Search(query string, maxResults int, YTDLPCommand string) ([]YTVideo, error
 	}
 
 	return videos, nil
+}
+
+// Converts YTDLPVideo struct to internal YTVideo struct
+func newYTVideoFromYTDLPVideo(YTDLPVideo YTDLPVideo) YTVideo {
+	var thumbnails []VideoThumbnail
+	for _, t := range YTDLPVideo.Thumbnails {
+		thumbnails = append(thumbnails, VideoThumbnail{
+			URL:    t.URL,
+			Height: t.Height,
+			Width:  t.Width,
+		})
+	}
+
+	return YTVideo{
+		Title:       YTDLPVideo.Title,
+		URL:         YTDLPVideo.URL,
+		Description: YTDLPVideo.Description,
+		Duration:    YTDLPVideo.Duration,
+		Channel:     YTDLPVideo.Channel,
+		ViewCount:   YTDLPVideo.ViewCount,
+		Thumbnails:  thumbnails,
+	}
 }

@@ -38,5 +38,12 @@ func Play(video string, cfg config.Player) error {
 	cmd.Stderr = os.Stderr
 
 	// Run will block until player is closed
-	return fmt.Errorf("failed to run player command: %w", cmd.Run())
+	err := cmd.Run()
+	// If error is ExitError, player was closed by user
+	// Not fatal application error, so return nil
+	if _, ok := err.(*exec.ExitError); ok {
+		return nil
+	}
+	// For other errors (e.g., command not found), should report them
+	return err
 }
