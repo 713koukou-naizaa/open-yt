@@ -46,13 +46,6 @@ func (a App) runSearch(args []string) error {
 	if err != nil || videos == nil { // videos == nil means no results were found and message was printed
 		return err
 	}
-	
-	for i, video := range videos {
-		durationMinutes := int(video.Duration / 60)
-		durationSeconds := int(video.Duration) % 60
-		fmt.Printf("%d. %s\n", i+1, video.Title)
-		fmt.Printf("   Channel: %s | Duration: %d:%02d | URL: %s\n", video.Channel, durationMinutes, durationSeconds, video.URL)
-	}
 
 	p := tea.NewProgram(newYTSearchModel(videos))
 	finalModel, err := p.Run()
