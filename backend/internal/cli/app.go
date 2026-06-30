@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbletea"
 	"strings"
 
 	"open-yt/internal/config"
@@ -41,14 +42,29 @@ func (a App) runSearch(args []string) error {
 
 	query := strings.Join(args, " ")
 
-	videos, err := youtube.Search(query, a.config.MaxResults)
-	if err != nil {
+	videos, err := a.searchVideos(query)
+	if err != nil || videos == nil { // videos == nil means no results were found and message was printed
 		return err
 	}
-
+	
 	for i, video := range videos {
+		durationMinutes := int(video.Duration / 60)
+		durationSeconds := int(video.Duration) % 60
 		fmt.Printf("%d. %s\n", i+1, video.Title)
-		fmt.Printf("   %s\n", video.URL)
+		fmt.Printf("   Channel: %s | Duration: %d:%02d | URL: %s\n", video.Channel, durationMinutes, durationSeconds, video.URL)
+	}
+
+	p := tea.NewProgram(newYTSearchModel(videos))
+	finalModel, err := p.Run()
+	if err != nil {
+		return fmt.Errorf("error running interactive search: %w", err)
+	}
+
+	// State of model when program exits
+	m := finalModel.(YTSearchModel)
+
+	if m.selectedVideo != nil {
+		return a.playVideo(m.selectedVideo.URL)
 	}
 
 	return nil
@@ -61,7 +77,26 @@ func (a App) runPlay(args []string) error {
 
 	video := args[0]
 
-	return player.Play(video, a.config.PlayerCommand)
+	return a.playVideo(video)
+}
+
+// Helper to abstract video searching logic
+// Returns a slice of videos or a nil slice if no videos were found
+func (a App) searchVideos(query string) ([]youtube.YTVideo, error) {
+	videos, err := youtube.Search(query, a.config.MaxResults, a.config.YTDLPCommand)
+	if err != nil {
+		return nil, err
+	}
+	if len(videos) == 0 {
+		fmt.Println("No videos found for your query.")
+		return nil, nil
+	}
+	return videos, nil
+}
+
+// Helper to abstract the video playing logic
+func (a App) playVideo(videoURL string) error {
+	return player.Play(videoURL, a.config.Player)
 }
 
 func (a App) printHelp() error {
