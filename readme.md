@@ -21,16 +21,16 @@ Implement little-by-little each components from simplest to more complex ones
 
 #### Features
 
-- Search videos from search term
-- Play video from link/ID
+- [x] Search videos from search term
+- [x] Play video from link/ID
 
 ### Second MVP - Advanced CLI version
 
-- Pagination in searches
-- Get videos from subscriptions feed
-- Get subscriptions
-- Search videos from search term from subscription
-- Dynamic filter in interactive list (index and content)
+- [ ] Pagination in searches
+- [x] Get videos from subscriptions feed
+- [ ] Get subscriptions
+- [x] Search videos from search term from subscription
+- [x] Dynamic filter in interactive list
 
 ### Third MVP - Full CLI version
 

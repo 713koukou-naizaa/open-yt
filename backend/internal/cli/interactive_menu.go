@@ -26,15 +26,15 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c", "q", "esc":
 			return m, tea.Quit
 
-		case "up", "left", "k":
+		case "up", "left":
 			if m.cursor > 0 {
 				m.cursor--
 			}
 
-		case "down", "right", "j":
+		case "down", "right":
 			if m.cursor < len(m.choices)-1 {
 				m.cursor++
 			}
@@ -57,6 +57,6 @@ func (m menuModel) View() string {
 		}
 		s += fmt.Sprintf("%s %s\n", cursor, choice)
 	}
-	s += "\n(arrows or j/k to move, enter to select, q or CTRL+C to quit)\n"
+	s += "\n(arrows to move, enter to select, q / esc / CTRL+C to quit)\n"
 	return s
 }
