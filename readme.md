@@ -28,9 +28,12 @@ Implement little-by-little each components from simplest to more complex ones
 
 - [ ] Pagination in searches
 - [x] Get videos from subscriptions feed
-- [ ] Get subscriptions
+- [x] Get subscriptions
+- [x] Get videos from subscriptions
+- [x] Get lives from subscriptions
 - [x] Search videos from search term from subscription
 - [x] Dynamic filter in interactive list
+- [x] Configuration via external file
 
 ### Third MVP - Full CLI version
 

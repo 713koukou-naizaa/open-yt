@@ -12,6 +12,13 @@ type YTVideo struct {
 	Thumbnails  []VideoThumbnail
 }
 
+// Holds information about YouTube channel
+type YTChannel struct {
+	ID   string
+	Name string
+	URL  string
+}
+
 // Holds information about video thumbnail
 type VideoThumbnail struct {
 	URL    string

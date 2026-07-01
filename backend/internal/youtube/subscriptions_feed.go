@@ -11,15 +11,12 @@ import (
 // Fetches latest videos from user's subscriptions feed
 // Requires yt-dlp to be configured with cookies for logged-in YouTube account
 func SubscriptionsFeed(paginationThreshold int, YTDLPCommand string, browser string) ([]YTVideo, error) {
-	// URL for YouTube subscriptions feed
-	subscriptionsURL := "https://www.youtube.com/feed/subscriptions"
-
 	// Command to fetch latest subscription videos as JSON
 	args := []string{"--flat-playlist", "--dump-json", "--playlist-end", fmt.Sprintf("%d", paginationThreshold)}
 	if browser != "" {
 		args = append(args, "--cookies-from-browser", browser)
 	}
-	args = append(args, subscriptionsURL)
+	args = append(args, feedSubscriptionsURL)
 
 	cmd := exec.Command(YTDLPCommand, args...)
 	
