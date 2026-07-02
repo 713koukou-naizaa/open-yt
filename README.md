@@ -43,7 +43,7 @@
 
 ## About The Project
 
-![Open-yt Demo](./assets/open-yt-demo.gif)
+<!-- ![Open-yt Demo](./assets/open-yt-demo.gif) -->
 
 Open-yt is a modern, lightweight YouTube client removing ads/tracking from your YouTube experience. It's designed to be easy to use, only the main YouTube features, distraction-free.
 
