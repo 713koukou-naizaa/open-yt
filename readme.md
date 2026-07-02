@@ -26,7 +26,6 @@ Implement little-by-little each components from simplest to more complex ones
 
 ### Second MVP - Advanced CLI version
 
-- [ ] Pagination in searches
 - [x] Get videos from subscriptions feed
 - [x] Get subscriptions
 - [x] Get videos from subscriptions
@@ -37,6 +36,6 @@ Implement little-by-little each components from simplest to more complex ones
 
 ### Third MVP - Full CLI version
 
-abc
+- [ ] Pagination in searches
 
 ### Fourth MVP - abc
