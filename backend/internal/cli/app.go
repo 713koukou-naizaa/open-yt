@@ -3,8 +3,9 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	"github.com/charmbracelet/bubbletea"
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
 
 	"open-yt/internal/config"
 	"open-yt/internal/player"
@@ -12,35 +13,35 @@ import (
 	"os"
 )
 
-type App struct {
-	config config.Config
+type Application struct {
+	configuration config.AppConfiguration
 }
 
-func NewApp(cfg config.Config) App {
-	return App{config: cfg}
+func NewApplication(configuration config.AppConfiguration) Application {
+	return Application{configuration: configuration}
 }
 
-func (a App) Run(args []string) error {
-	if len(args) == 0 {
-		return a.runInteractive()
+func (application Application) Run(applicationArgs []string) error {
+	if len(applicationArgs) == 0 {
+		return application.runInteractive()
 	}
 
-	switch args[0] {
-		case cmdSearch:
-			return a.runSearch(args[1:])
+	switch applicationArgs[0] {
+	case cmdSearch:
+		return application.runSearch(applicationArgs[1:])
 
-		case cmdPlay:
-			return a.runPlay(args[1:])
+	case cmdPlay:
+		return application.runPlay(applicationArgs[1:])
 
-		case cmdHelp, "-h", "--help":
-			return a.printHelp()
+	case cmdHelp, "-h", "--help":
+		return application.printHelp()
 
-		default:
-			return fmt.Errorf("unknown command: %s", args[0])
+	default:
+		return fmt.Errorf("unknown command: %s", applicationArgs[0])
 	}
 }
 
-func (a App) runInteractive() error {
+func (a Application) runInteractive() error {
 	p := tea.NewProgram(NewMainMenuModel())
 	finalModel, err := p.Run()
 	if err != nil {
@@ -52,37 +53,37 @@ func (a App) runInteractive() error {
 	// Create new scanner to read from stdin
 	scanner := bufio.NewScanner(os.Stdin)
 
-	switch m.selected {
-		case menuSearch:
-			fmt.Print("Enter search query: ")
-			if scanner.Scan() {
-				query := scanner.Text()
-				return a.runSearch(strings.Fields(query))
-			}
-
-		case menuPlay:
-			fmt.Print("Enter YouTube URL or video ID: ")
-			if scanner.Scan() {
-				url := scanner.Text()
-				return a.runPlay([]string{url})
-			}
-
-		case menuSubscriptions:
-			return a.runSubscriptions()
-
-		case menuSubscriptionsFeed:
-			return a.runSubscriptionsFeed()
-
-		case menuQuit:
-			return nil
+	switch m.selectedChoice {
+	case menuSearch:
+		fmt.Print("Enter search query: ")
+		if scanner.Scan() {
+			query := scanner.Text()
+			return a.runSearch(strings.Fields(query))
 		}
+
+	case menuPlay:
+		fmt.Print("Enter YouTube URL or video ID: ")
+		if scanner.Scan() {
+			url := scanner.Text()
+			return a.runPlay([]string{url})
+		}
+
+	case menuSubscriptions:
+		return a.runSubscriptions()
+
+	case menuSubscriptionsFeed:
+		return a.runSubscriptionsFeed()
+
+	case menuQuit:
+		return nil
+	}
 	return nil
 }
 
-func (a App) runSubscriptions() error {
+func (a Application) runSubscriptions() error {
 	// Fetch channels
 	fmt.Println("Fetching your subscriptions...")
-	channels, err := youtube.GetSubscriptions(a.config.YTDLPCommand, a.config.CookiesFromBrowser)
+	channels, err := youtube.GetSubscriptions(a.configuration.YTDLPCommand, a.configuration.CookiesFromBrowser)
 	if err != nil {
 		return err
 	}
@@ -108,14 +109,14 @@ func (a App) runSubscriptions() error {
 	}
 
 	selectedChanModel := finalModel.(FilterableListModel)
-	if selectedChanModel.back || selectedChanModel.selected == "" {
+	if selectedChanModel.shouldGoBack || selectedChanModel.selectedChoice == "" {
 		return a.runInteractive() // Go back to main menu
 	}
 
-	selectedChannel := channelMap[selectedChanModel.selected]
+	selectedChannel := channelMap[selectedChanModel.selectedChoice]
 
 	// Select channel content type
-	contentTypeModel := NewSimpleMenuModel([]string{contentTypeVideos, contentTypeStreams}, "Select content type:")
+	contentTypeModel := NewSimpleMenuModel([]string{contentTypeVideosDisplay, contentTypeStreamsDisplay}, "Select content type:")
 	p = tea.NewProgram(contentTypeModel)
 	finalModel, err = p.Run()
 	if err != nil {
@@ -123,20 +124,20 @@ func (a App) runSubscriptions() error {
 	}
 
 	selectedContentTypeModel := finalModel.(SimpleMenuModel)
-	if selectedContentTypeModel.selected == "" { 
+	if selectedContentTypeModel.selectedChoice == "" {
 		return a.runInteractive()
 	}
 
 	var contentType string
-	if selectedContentTypeModel.selected == contentTypeVideos {
-		contentType = contentTypeVideosInternal
+	if selectedContentTypeModel.selectedChoice == contentTypeVideosDisplay {
+		contentType = contentTypeVideosLink
 	} else {
-		contentType = contentTypeStreamsInternal
+		contentType = contentTypeStreamsLink
 	}
 
 	// Fetch channel content type content
 	fmt.Printf("Fetching latest %s from %s...\n", contentType, selectedChannel.Name)
-	videos, err := youtube.GetChannelUploads(selectedChannel.ID, contentType, a.config.PaginationThreshold, a.config.YTDLPCommand)
+	videos, err := youtube.GetChannelUploads(selectedChannel.ID, contentType, a.configuration.PaginationThreshold, a.configuration.YTDLPCommand)
 	if err != nil {
 		return err
 	}
@@ -149,13 +150,13 @@ func (a App) runSubscriptions() error {
 	return a.runInteractiveVideoList(videos)
 }
 
-func (a App) runSearch(args []string) error {
-	if len(args) == 0 {
+func (a Application) runSearch(searchArgs []string) error {
+	if len(searchArgs) == 0 {
 		return fmt.Errorf("usage: open-yt %s <query>", cmdSearch)
 	}
 
 	// Fetch videos
-	query := strings.Join(args, " ")
+	query := strings.Join(searchArgs, " ")
 	videos, err := a.searchVideos(query)
 	if err != nil || videos == nil {
 		return err
@@ -165,10 +166,10 @@ func (a App) runSearch(args []string) error {
 	return a.runInteractiveVideoList(videos)
 }
 
-func (a App) runSubscriptionsFeed() error {
+func (a Application) runSubscriptionsFeed() error {
 	// Fetch videos
 	fmt.Println("Fetching videos from your subscriptions feed...")
-	videos, err := youtube.SubscriptionsFeed(a.config.PaginationThreshold, a.config.YTDLPCommand, a.config.CookiesFromBrowser)
+	videos, err := youtube.SubscriptionsFeed(a.configuration.PaginationThreshold, a.configuration.YTDLPCommand, a.configuration.CookiesFromBrowser)
 	if err != nil {
 		return err
 	}
@@ -182,18 +183,18 @@ func (a App) runSubscriptionsFeed() error {
 	return a.runInteractiveVideoList(videos)
 }
 
-func (a App) runPlay(args []string) error {
-	if len(args) == 0 {
+func (a Application) runPlay(playArgs []string) error {
+	if len(playArgs) == 0 {
 		return fmt.Errorf("usage: open-yt %s <youtube-url-or-video-id>", cmdPlay)
 	}
 
 	// Fetch and play video
-	video := args[0]
+	video := playArgs[0]
 	return a.playVideo(video)
 }
 
 // Displays list of videos and handles user selection
-func (a App) runInteractiveVideoList(videos []youtube.YTVideo) error {
+func (a Application) runInteractiveVideoList(videos []youtube.YTVideo) error {
 	p := tea.NewProgram(newYTSearchModel(videos))
 	finalModel, err := p.Run()
 	if err != nil {
@@ -207,14 +208,14 @@ func (a App) runInteractiveVideoList(videos []youtube.YTVideo) error {
 }
 
 // Processes result from YTSearchModel bubble
-func (a App) handleSearchResult(m YTSearchModel) error {
+func (a Application) handleSearchResult(m YTSearchModel) error {
 	// If user chose to go back, re-run main interactive menu
-	if m.back {
+	if m.shouldGoBack {
 		return a.runInteractive()
 	}
 
-	if m.selectedVideo != nil {
-		err := a.playVideo(m.selectedVideo.URL)
+	if m.selectedYTVideo != nil {
+		err := a.playVideo(m.selectedYTVideo.URL)
 		if err != nil {
 			return err
 		}
@@ -225,9 +226,9 @@ func (a App) handleSearchResult(m YTSearchModel) error {
 
 // Helper to abstract video searching logic
 // Returns a slice of videos or a nil slice if no videos were found
-func (a App) searchVideos(query string) ([]youtube.YTVideo, error) {
+func (a Application) searchVideos(query string) ([]youtube.YTVideo, error) {
 	// Fetch videos
-	videos, err := youtube.Search(query, a.config.PaginationThreshold, a.config.YTDLPCommand)
+	videos, err := youtube.Search(query, a.configuration.PaginationThreshold, a.configuration.YTDLPCommand)
 	if err != nil {
 		return nil, err
 	}
@@ -239,12 +240,12 @@ func (a App) searchVideos(query string) ([]youtube.YTVideo, error) {
 }
 
 // Helper to abstract the video playing logic
-func (a App) playVideo(videoURL string) error {
+func (a Application) playVideo(videoURL string) error {
 	// Fetch and play video
-	return player.Play(videoURL, a.config.Player)
+	return player.Play(videoURL, a.configuration.PlayerConfiguration)
 }
 
-func (a App) printHelp() error {
+func (a Application) printHelp() error {
 	fmt.Println(`open-yt
 
 Usage:

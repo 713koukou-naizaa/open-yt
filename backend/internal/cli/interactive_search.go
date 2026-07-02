@@ -2,57 +2,58 @@ package cli
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbletea"
 	"open-yt/internal/youtube"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // Holds state for interactive search list
 type YTSearchModel struct {
 	FilterableListModel
-	allVideos     []youtube.YTVideo
-	videoMap      map[string]youtube.YTVideo
-	selectedVideo *youtube.YTVideo // selected video
+	allYTVideos           []youtube.YTVideo
+	videoStringYTVideoMap map[string]youtube.YTVideo
+	selectedYTVideo       *youtube.YTVideo
 }
 
-func newYTSearchModel(returnedVideos []youtube.YTVideo) YTSearchModel {
-	videoStrings := make([]string, 0, len(returnedVideos))
-	videoMap := make(map[string]youtube.YTVideo)
-	for i, video := range returnedVideos {
-		displayString := formatVideoForList(video, i)
+func newYTSearchModel(returnedYTVideos []youtube.YTVideo) YTSearchModel {
+	videoStrings := make([]string, 0, len(returnedYTVideos))
+	videoStringYTVideoMap := make(map[string]youtube.YTVideo)
+	for videoIndex, YTVideo := range returnedYTVideos {
+		displayString := formatVideoForList(YTVideo, videoIndex)
 		videoStrings = append(videoStrings, displayString)
-		videoMap[displayString] = video
+		videoStringYTVideoMap[displayString] = YTVideo
 	}
 
 	return YTSearchModel{
-		FilterableListModel: NewFilterableListModel(videoStrings, "Select a video to play:"),
-		allVideos:           returnedVideos,
-		videoMap:            videoMap,
+		FilterableListModel:   NewFilterableListModel(videoStrings, "Select a video to play:"),
+		allYTVideos:           returnedYTVideos,
+		videoStringYTVideoMap: videoStringYTVideoMap,
 	}
 }
 
-func (m YTSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (YTSearchFilterableList YTSearchModel) Update(userMessage tea.Msg) (tea.Model, tea.Cmd) {
 	// Use the embedded model's Update
-	newModel, cmd := m.FilterableListModel.Update(msg)
-	m.FilterableListModel = newModel.(FilterableListModel)
+	updatedYTSearchFilterableList, cmd := YTSearchFilterableList.FilterableListModel.Update(userMessage)
+	YTSearchFilterableList.FilterableListModel = updatedYTSearchFilterableList.(FilterableListModel)
 
 	// If a selection was made, map it back to the YTVideo struct
-	if m.selected != "" {
-		selectedVid := m.videoMap[m.selected]
-		m.selectedVideo = &selectedVid
+	if YTSearchFilterableList.selectedChoice != "" {
+		selectedYTVideo := YTSearchFilterableList.videoStringYTVideoMap[YTSearchFilterableList.selectedChoice]
+		YTSearchFilterableList.selectedYTVideo = &selectedYTVideo
 	}
 
-	return m, cmd
+	return YTSearchFilterableList, cmd
 }
 
-func formatVideoForList(video youtube.YTVideo, index int) string {
+func formatVideoForList(YTVideo youtube.YTVideo, videoIndex int) string {
 	// Format duration
-	durationMinutes := int(video.Duration / 60)
-	durationSeconds := int(video.Duration) % 60
-	durationStr := fmt.Sprintf("%d:%02d", durationMinutes, durationSeconds)
+	durationMinutes := int(YTVideo.Duration / 60)
+	durationSeconds := int(YTVideo.Duration) % 60
+	durationString := fmt.Sprintf("%d:%02d", durationMinutes, durationSeconds)
 
 	// Render video row
-	if video.Channel != "" {
-		return fmt.Sprintf("%d. [%s] [%s] %s", index, video.Channel, durationStr, video.Title)
+	if YTVideo.Channel != "" {
+		return fmt.Sprintf("%d. [%s] [%s] %s", videoIndex, YTVideo.Channel, durationString, YTVideo.Title)
 	}
-	return fmt.Sprintf("%d. [%s] %s", index, durationStr, video.Title)
+	return fmt.Sprintf("%d. [%s] %s", videoIndex, durationString, YTVideo.Title)
 }

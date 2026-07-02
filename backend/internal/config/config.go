@@ -2,22 +2,23 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/viper"
 )
 
-// Config holds all configuration for the application.
-// Tags are used by viper to map configuration keys to struct fields.
-type Config struct {
-	YTDLPCommand        string `mapstructure:"yt-dlp_command"`
-	Player              Player `mapstructure:"player"`
-	CookiesFromBrowser  string `mapstructure:"cookies_from_browser"`
-	PaginationThreshold int    `mapstructure:"pagination_threshold"`
+// Holds all configuration for the application
+// Tags are used by viper to map configuration keys to struct fields
+type AppConfiguration struct {
+	YTDLPCommand        string              `mapstructure:"yt-dlp_command"`
+	PlayerConfiguration PlayerConfiguration `mapstructure:"player"`
+	CookiesFromBrowser  string              `mapstructure:"cookies_from_browser"`
+	PaginationThreshold int                 `mapstructure:"pagination_threshold"`
 }
 
-// Player holds the configuration for the video player.
-type Player struct {
+// Player holds the configuration for the video player
+type PlayerConfiguration struct {
 	Command         string `mapstructure:"command"`
 	YTDLFormat      string `mapstructure:"ytdl_format"`
 	Volume          *int   `mapstructure:"volume"` // Pointer to distinguish between 0 and not set
@@ -27,9 +28,9 @@ type Player struct {
 	ForceWindow     string `mapstructure:"force_window"`
 }
 
-// Load reads configuration from a file and sets defaults.
-func Load() (Config, error) {
-	var cfg Config
+// Load reads configuration from a file and sets defaults
+func Load() (AppConfiguration, error) {
+	var appConfiguration AppConfiguration
 
 	// Set default values for top-level config
 	viper.SetDefault("yt-dlp_command", "yt-dlp")
@@ -44,29 +45,32 @@ func Load() (Config, error) {
 	viper.SetDefault("pagination_threshold", 30)
 
 	// Find home directory.
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return cfg, fmt.Errorf("could not get user home directory: %w", err)
+	homeDirectory, getHomeDirectoryError := os.UserHomeDir()
+	if getHomeDirectoryError != nil {
+		return appConfiguration, fmt.Errorf("could not get user home directory: %w", getHomeDirectoryError)
 	}
 
 	// Set config path
-	configPath := filepath.Join(home, ".config", "open-yt")
-	viper.AddConfigPath(configPath)
+	configurationFilePath := filepath.Join(homeDirectory, ".config", "open-yt")
+	viper.AddConfigPath(configurationFilePath)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 
 	// Attempt to read the config file
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			// Config file was found but another error was produced
-			return cfg, fmt.Errorf("error reading config file: %w", err)
+	viperConfigurationFileReadError := viper.ReadInConfig()
+	if viperConfigurationFileReadError != nil {
+		_, viperConfigurationFileReadErrorIsFileNotFound := viperConfigurationFileReadError.(viper.ConfigFileNotFoundError)
+		if !viperConfigurationFileReadErrorIsFileNotFound {
+			// Configuration file was found but another error was produced
+			return appConfiguration, fmt.Errorf("error reading config file: %w", viperConfigurationFileReadError)
 		}
 	}
 
 	// Unmarshal the config into the struct
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return cfg, fmt.Errorf("unable to decode into struct: %w", err)
+	viperConfigurationUnmarshallError := viper.Unmarshal(&appConfiguration)
+	if viperConfigurationUnmarshallError != nil {
+		return appConfiguration, fmt.Errorf("unable to decode into struct: %w", viperConfigurationUnmarshallError)
 	}
 
-	return cfg, nil
+	return appConfiguration, nil
 }

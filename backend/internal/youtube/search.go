@@ -7,47 +7,50 @@ import (
 	"os/exec"
 )
 
-func Search(query string, paginationThreshold int, YTDLPCommand string) ([]YTVideo, error) {
-	searchQuery := fmt.Sprintf("ytsearch%d:%s", paginationThreshold, query)
-	cmd := exec.Command(YTDLPCommand, "--flat-playlist", "--dump-json", searchQuery)
+func Search(searchQuery string, paginationThreshold int, YTDLPCommand string) ([]YTVideo, error) {
+	YTSearchSearchQuery := fmt.Sprintf("ytsearch%d:%s", paginationThreshold, searchQuery)
+	cmd := exec.Command(YTDLPCommand, "--flat-playlist", "--dump-json", YTSearchSearchQuery)
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
+	stdout, cmdStdoutPipeError := cmd.StdoutPipe()
+	if cmdStdoutPipeError != nil {
+		return nil, fmt.Errorf("failed to get stdout pipe: %w", cmdStdoutPipeError)
 	}
 
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("failed to start yt-dlp command: %w", err)
+	cmdStartError := cmd.Start()
+	if cmdStartError != nil {
+		return nil, fmt.Errorf("failed to start yt-dlp command: %w", cmdStartError)
 	}
 
-	var videos []YTVideo
+	var YTVideos []YTVideo
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
-		var YTDLPVideo YTDLPVideo
-		if err := json.Unmarshal(scanner.Bytes(), &YTDLPVideo); err == nil {
-			videos = append(videos, newYTVideoFromYTDLPVideo(YTDLPVideo))
+		var currentYTDLPVideo YTDLPVideo
+		if err := json.Unmarshal(scanner.Bytes(), &currentYTDLPVideo); err == nil {
+			YTVideos = append(YTVideos, newYTVideoFromYTDLPVideo(currentYTDLPVideo))
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading yt-dlp output: %w", err)
+	scannerError := scanner.Err()
+	if scannerError != nil {
+		return nil, fmt.Errorf("error reading yt-dlp output: %w", scannerError)
 	}
 
-	if err := cmd.Wait(); err != nil {
-		return nil, fmt.Errorf("yt-dlp command failed: %w", err)
+	cmdWaitError := cmd.Wait()
+	if cmdWaitError != nil {
+		return nil, fmt.Errorf("yt-dlp command failed: %w", cmdWaitError)
 	}
 
-	return videos, nil
+	return YTVideos, nil
 }
 
-// Converts YTDLPVideo struct to internal YTVideo struct
+// Converts YTDLPVideo struct to YTVideo struct
 func newYTVideoFromYTDLPVideo(YTDLPVideo YTDLPVideo) YTVideo {
-	var thumbnails []VideoThumbnail
-	for _, t := range YTDLPVideo.Thumbnails {
-		thumbnails = append(thumbnails, VideoThumbnail{
-			URL:    t.URL,
-			Height: t.Height,
-			Width:  t.Width,
+	var YTDLPVideoThumbnails []VideoThumbnail
+	for _, currentYTDLPVideoThumbnail := range YTDLPVideo.Thumbnails {
+		YTDLPVideoThumbnails = append(YTDLPVideoThumbnails, VideoThumbnail{
+			URL:    currentYTDLPVideoThumbnail.URL,
+			Height: currentYTDLPVideoThumbnail.Height,
+			Width:  currentYTDLPVideoThumbnail.Width,
 		})
 	}
 
@@ -59,6 +62,6 @@ func newYTVideoFromYTDLPVideo(YTDLPVideo YTDLPVideo) YTVideo {
 		Duration:    YTDLPVideo.Duration,
 		Channel:     YTDLPVideo.Channel,
 		ViewCount:   YTDLPVideo.ViewCount,
-		Thumbnails:  thumbnails,
+		Thumbnails:  YTDLPVideoThumbnails,
 	}
 }

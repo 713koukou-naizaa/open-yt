@@ -13,12 +13,12 @@ const (
 // Subscription Content Types
 const (
 	// Display values
-	contentTypeVideos  = "Videos"
-	contentTypeStreams = "Streams"
+	contentTypeVideosDisplay  = "Videos"
+	contentTypeStreamsDisplay = "Streams"
 
 	// Internal values used with yt-dlp
-	contentTypeVideosInternal  = "videos"
-	contentTypeStreamsInternal = "streams"
+	contentTypeVideosLink  = "videos"
+	contentTypeStreamsLink = "streams"
 )
 
 // CLI commands

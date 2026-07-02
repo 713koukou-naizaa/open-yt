@@ -8,29 +8,29 @@ import (
 	"open-yt/internal/config"
 )
 
-func Play(video string, cfg config.Player) error {
-	args := []string{}
+func Play(videoURL string, cfg config.PlayerConfiguration) error {
+	MPVArgs := []string{}
 
 	if cfg.YTDLFormat != "" {
-		args = append(args, fmt.Sprintf("--ytdl-format=%s", cfg.YTDLFormat))
+		MPVArgs = append(MPVArgs, fmt.Sprintf("--ytdl-format=%s", cfg.YTDLFormat))
 	}
 	if cfg.Volume != nil {
-		args = append(args, fmt.Sprintf("--volume=%d", *cfg.Volume))
+		MPVArgs = append(MPVArgs, fmt.Sprintf("--volume=%d", *cfg.Volume))
 	}
 	if cfg.Fullscreen != "" {
-		args = append(args, fmt.Sprintf("--fullscreen=%s", cfg.Fullscreen))
+		MPVArgs = append(MPVArgs, fmt.Sprintf("--fullscreen=%s", cfg.Fullscreen))
 	}
 	if cfg.WindowMaximized != "" {
-		args = append(args, fmt.Sprintf("--window-maximized=%s", cfg.WindowMaximized))
+		MPVArgs = append(MPVArgs, fmt.Sprintf("--window-maximized=%s", cfg.WindowMaximized))
 	}
 	if cfg.KeepOpen != "" {
-		args = append(args, fmt.Sprintf("--keep-open=%s", cfg.KeepOpen))
+		MPVArgs = append(MPVArgs, fmt.Sprintf("--keep-open=%s", cfg.KeepOpen))
 	}
 	if cfg.ForceWindow != "" {
-		args = append(args, fmt.Sprintf("--force-window=%s", cfg.ForceWindow))
+		MPVArgs = append(MPVArgs, fmt.Sprintf("--force-window=%s", cfg.ForceWindow))
 	}
 
-	cmd := exec.Command(cfg.Command, append(args, video)...)
+	cmd := exec.Command(cfg.Command, append(MPVArgs, videoURL)...)
 
 	// Pipe command's stdout and stderr to current process's stdout and stderr
 	// so user can see output from player
@@ -38,12 +38,13 @@ func Play(video string, cfg config.Player) error {
 	cmd.Stderr = os.Stderr
 
 	// Run will block until player is closed
-	err := cmd.Run()
+	cmdRunError := cmd.Run()
 	// If error is ExitError, player was closed by user
 	// Not fatal application error, so return nil
-	if _, ok := err.(*exec.ExitError); ok {
+	_, cmdRunIsExitError := cmdRunError.(*exec.ExitError)
+	if cmdRunIsExitError {
 		return nil
 	}
 	// For other errors (e.g., command not found), should report them
-	return err
+	return cmdRunError
 }

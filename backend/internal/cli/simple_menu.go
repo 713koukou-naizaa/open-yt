@@ -3,83 +3,83 @@ package cli
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type SimpleMenuModel struct {
-	choices  []string
-	cursor   int
-	selected string
-	prompt   string
+	menuChoices    []string
+	cursorPosition int
+	selectedChoice string
+	menuPrompt     string
 }
 
 func NewMainMenuModel() SimpleMenuModel {
 	return SimpleMenuModel{
-		choices: []string{
+		menuChoices: []string{
 			menuSearch,
 			menuPlay,
 			menuSubscriptions,
 			menuSubscriptionsFeed,
 			menuQuit,
 		},
-		prompt:  "What do you want to do?",
+		menuPrompt: "What do you want to do?",
 	}
 }
 
-func NewSimpleMenuModel(choices []string, prompt string) SimpleMenuModel {
+func NewSimpleMenuModel(menuChoices []string, menuPrompt string) SimpleMenuModel {
 	return SimpleMenuModel{
-		choices: choices,
-		prompt:  prompt,
+		menuChoices: menuChoices,
+		menuPrompt:  menuPrompt,
 	}
 }
 
-func (m SimpleMenuModel) Init() tea.Cmd {
+func (simpleMenu SimpleMenuModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m SimpleMenuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
+func (simpleMenu SimpleMenuModel) Update(userMessage tea.Msg) (tea.Model, tea.Cmd) {
+	switch userMessageType := userMessage.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
+		switch userMessageType.String() {
 		case "ctrl+c", "q", "esc":
-			return m, tea.Quit
+			return simpleMenu, tea.Quit
 
 		case "up", "left":
-			if len(m.choices) > 0 {
-				if m.cursor > 0 {
-					m.cursor--
+			if len(simpleMenu.menuChoices) > 0 {
+				if simpleMenu.cursorPosition > 0 {
+					simpleMenu.cursorPosition--
 				} else {
-					m.cursor = len(m.choices) - 1
+					simpleMenu.cursorPosition = len(simpleMenu.menuChoices) - 1
 				}
 			}
 
 		case "down", "right":
-			if len(m.choices) > 0 {
-				if m.cursor < len(m.choices)-1 {
-					m.cursor++
+			if len(simpleMenu.menuChoices) > 0 {
+				if simpleMenu.cursorPosition < len(simpleMenu.menuChoices)-1 {
+					simpleMenu.cursorPosition++
 				} else {
-					m.cursor = 0
+					simpleMenu.cursorPosition = 0
 				}
 			}
 
 		case "enter":
-			m.selected = m.choices[m.cursor]
-			return m, tea.Quit
+			simpleMenu.selectedChoice = simpleMenu.menuChoices[simpleMenu.cursorPosition]
+			return simpleMenu, tea.Quit
 		}
 	}
-	return m, nil
+	return simpleMenu, nil
 }
 
-func (m SimpleMenuModel) View() string {
-	s := m.prompt + "\n\n"
-	
-	for i, choice := range m.choices {
-		cursor := " "
-		if m.cursor == i {
-			cursor = ">"
+func (simpleMenu SimpleMenuModel) View() string {
+	menuStringView := simpleMenu.menuPrompt + "\n\n"
+
+	for index, menuChoice := range simpleMenu.menuChoices {
+		menuCursor := " "
+		if simpleMenu.cursorPosition == index {
+			menuCursor = ">"
 		}
-		s += fmt.Sprintf("%s %s\n", cursor, choice)
+		menuStringView += fmt.Sprintf("%s %s\n", menuCursor, menuChoice)
 	}
-	s += "\n(arrows to move, enter to select, q / esc / CTRL+C to quit)\n"
-	return s
+	menuStringView += "\n(arrows to move, enter to select, q / esc / CTRL+C to quit)\n"
+	return menuStringView
 }

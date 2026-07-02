@@ -2,144 +2,145 @@ package cli
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbletea"
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
-// A generic, filterable list model.
+// A generic, filterable list model
 type FilterableListModel struct {
-	allItems      []string
-	filteredItems []string
-	cursor        int
-	selected      string
-	back          bool
-	prompt        string
-	filterQuery   string
-	width         int
-	height        int
+	allItems             []string
+	filteredItems        []string
+	cursorPosition       int
+	selectedChoice       string
+	shouldGoBack         bool
+	listPrompt           string
+	filterQuery          string
+	terminalWindowWidth  int
+	terminalWindowHeight int
 }
 
-func NewFilterableListModel(items []string, prompt string) FilterableListModel {
+func NewFilterableListModel(allItems []string, listPrompt string) FilterableListModel {
 	return FilterableListModel{
-		allItems:      items,
-		filteredItems: items,
-		prompt:        prompt,
+		allItems:      allItems,
+		filteredItems: allItems,
+		listPrompt:    listPrompt,
 	}
 }
 
-func (m FilterableListModel) Init() tea.Cmd {
+func (filterableList FilterableListModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m FilterableListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
+func (filterableList FilterableListModel) Update(userMessage tea.Msg) (tea.Model, tea.Cmd) {
+	switch userMessageType := userMessage.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		return m, nil
+		filterableList.terminalWindowWidth = userMessageType.Width
+		filterableList.terminalWindowHeight = userMessageType.Height
+		return filterableList, nil
 
 	case tea.KeyMsg:
-		switch msg.String() {
+		switch userMessageType.String() {
 		case "ctrl+c":
-			return m, tea.Quit
+			return filterableList, tea.Quit
 
 		case "esc":
-			m.back = true
-			return m, tea.Quit
+			filterableList.shouldGoBack = true
+			return filterableList, tea.Quit
 
 		case "enter":
-			if len(m.filteredItems) > 0 && m.cursor < len(m.filteredItems) {
-				m.selected = m.filteredItems[m.cursor]
+			if len(filterableList.filteredItems) > 0 && filterableList.cursorPosition < len(filterableList.filteredItems) {
+				filterableList.selectedChoice = filterableList.filteredItems[filterableList.cursorPosition]
 			}
-			return m, tea.Quit
+			return filterableList, tea.Quit
 
 		case "backspace":
-			if len(m.filterQuery) > 0 {
-				m.filterQuery = m.filterQuery[:len(m.filterQuery)-1]
-				m.filterItems()
+			if len(filterableList.filterQuery) > 0 {
+				filterableList.filterQuery = filterableList.filterQuery[:len(filterableList.filterQuery)-1]
+				filterableList.filterItems()
 			}
 
 		case "up", "left":
-			if len(m.filteredItems) > 0 {
-				if m.cursor > 0 {
-					m.cursor--
+			if len(filterableList.filteredItems) > 0 {
+				if filterableList.cursorPosition > 0 {
+					filterableList.cursorPosition--
 				} else {
-					m.cursor = len(m.filteredItems) - 1
+					filterableList.cursorPosition = len(filterableList.filteredItems) - 1
 				}
 			}
 
 		case "down", "right":
-			if len(m.filteredItems) > 0 {
-				if m.cursor < len(m.filteredItems)-1 {
-					m.cursor++
+			if len(filterableList.filteredItems) > 0 {
+				if filterableList.cursorPosition < len(filterableList.filteredItems)-1 {
+					filterableList.cursorPosition++
 				} else {
-					m.cursor = 0
+					filterableList.cursorPosition = 0
 				}
 			}
 
 		default:
-			if msg.Type == tea.KeyRunes {
-				m.filterQuery += string(msg.Runes)
-				m.filterItems()
+			if userMessageType.Type == tea.KeyRunes {
+				filterableList.filterQuery += string(userMessageType.Runes)
+				filterableList.filterItems()
 			}
 		}
 	}
-	return m, nil
+	return filterableList, nil
 }
 
-func (m FilterableListModel) View() string {
-	if m.width == 0 {
+func (filterableList FilterableListModel) View() string {
+	if filterableList.terminalWindowWidth == 0 {
 		return "Initializing..."
 	}
 
-	var s strings.Builder
-	s.WriteString(fmt.Sprintf("%s\nFilter: %s█\n\n", m.prompt, m.filterQuery))
+	var filterableListStringView strings.Builder
+	filterableListStringView.WriteString(fmt.Sprintf("%s\nFilter: %s█\n\n", filterableList.listPrompt, filterableList.filterQuery))
 
 	// Calculate viewport
 	headerHeight := 4 // Lines for prompt, filter, and newlines
 	footerHeight := 2 // Lines for help text
-	listHeight := m.height - headerHeight - footerHeight
+	listTotalHeight := filterableList.terminalWindowHeight - headerHeight - footerHeight
 
 	start := 0
-	end := len(m.filteredItems)
+	end := len(filterableList.filteredItems)
 
-	if len(m.filteredItems) > listHeight {
-		start = m.cursor - listHeight/2
+	if len(filterableList.filteredItems) > listTotalHeight {
+		start = filterableList.cursorPosition - listTotalHeight/2
 		if start < 0 {
 			start = 0
 		}
-		end = start + listHeight
-		if end > len(m.filteredItems) {
-			end = len(m.filteredItems)
-			start = end - listHeight
+		end = start + listTotalHeight
+		if end > len(filterableList.filteredItems) {
+			end = len(filterableList.filteredItems)
+			start = end - listTotalHeight
 		}
 	}
 
-	for i := start; i < end; i++ {
-		item := m.filteredItems[i]
-		cursor := " "
-		if m.cursor == i {
-			cursor = ">"
+	for index := start; index < end; index++ {
+		itemString := filterableList.filteredItems[index]
+		cursorString := " "
+		if filterableList.cursorPosition == index {
+			cursorString = ">"
 		}
-		s.WriteString(fmt.Sprintf("%s %s\n", cursor, item))
+		filterableListStringView.WriteString(fmt.Sprintf("%s %s\n", cursorString, itemString))
 	}
 
-	if len(m.filteredItems) == 0 {
-		s.WriteString("No items match your filter.\n")
+	if len(filterableList.filteredItems) == 0 {
+		filterableListStringView.WriteString("No items match your filter.\n")
 	}
 
-	s.WriteString("\n(type to filter, arrows to move, enter to select, esc to go back, CTRL+C to quit)\n")
-	return s.String()
+	filterableListStringView.WriteString("\n(type to filter, arrows to move, enter to select, esc to go back, CTRL+C to quit)\n")
+	return filterableListStringView.String()
 }
 
-func (m *FilterableListModel) filterItems() {
-	lowerQuery := strings.ToLower(m.filterQuery)
-	filtered := []string{}
-	for _, item := range m.allItems {
-		if strings.Contains(strings.ToLower(item), lowerQuery) {
-			filtered = append(filtered, item)
+func (filterableList *FilterableListModel) filterItems() {
+	lowerQuery := strings.ToLower(filterableList.filterQuery)
+	filteredItems := []string{}
+	for _, itemString := range filterableList.allItems {
+		if strings.Contains(strings.ToLower(itemString), lowerQuery) {
+			filteredItems = append(filteredItems, itemString)
 		}
 	}
-	m.filteredItems = filtered
-	m.cursor = 0 // Reset cursor
+	filterableList.filteredItems = filteredItems
+	filterableList.cursorPosition = 0 // Reset cursor
 }

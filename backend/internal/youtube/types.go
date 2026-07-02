@@ -29,13 +29,13 @@ type VideoThumbnail struct {
 // Used to unmarshal the JSON output from yt-dlp command
 // JSON tags correspond to fields in yt-dlp JSON output
 type YTDLPVideo struct {
-	ID          string           	  `json:"id"`
-	Title       string           	  `json:"title"`
-	URL         string           	  `json:"webpage_url"`
-	Description string           	  `json:"description"`
-	Duration    float64          	  `json:"duration"`
-	Channel     string           	  `json:"channel"`
-	ViewCount   int             	  `json:"view_count"`
+	ID          string                `json:"id"`
+	Title       string                `json:"title"`
+	URL         string                `json:"webpage_url"`
+	Description string                `json:"description"`
+	Duration    float64               `json:"duration"`
+	Channel     string                `json:"channel"`
+	ViewCount   int                   `json:"view_count"`
 	Thumbnails  []YTDLPVideoThumbnail `json:"thumbnails"`
 }
 
