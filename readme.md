@@ -37,7 +37,8 @@ Implement little-by-little each components from simplest to more complex ones
 ### Third MVP - Full CLI version
 
 - [ ] Pagination in searches
-- [ ] Home feed
+- [x] Home feed
 - [ ] Playlists
+- [ ] Thumbnails display
 
 ### Fourth MVP - abc
