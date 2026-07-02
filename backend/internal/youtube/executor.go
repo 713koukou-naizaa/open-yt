@@ -13,18 +13,19 @@ import (
 func ytdlpExecutor(ytdlpCommand string, args []string, processLine func(line []byte) error) error {
 	cmd := exec.Command(ytdlpCommand, args...)
 
-	stdout, err := cmd.StdoutPipe()
+	stdout, cmdStdoutPipeError := cmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("failed to get stdout pipe: %w", err)
+		return fmt.Errorf("failed to get stdout pipe: %w", cmdStdoutPipeError)
 	}
 
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("failed to get stderr pipe: %w", err)
+	stderr, cmdStderrPiepError := cmd.StderrPipe()
+	if cmdStderrPiepError != nil {
+		return fmt.Errorf("failed to get stderr pipe: %w", cmdStderrPiepError)
 	}
 
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start yt-dlp command: %w", err)
+	cmdStartError := cmd.Start()
+	if cmdStartError != nil {
+		return fmt.Errorf("failed to start yt-dlp command: %w", cmdStartError)
 	}
 
 	// Read stderr in background to capture any error messages,
@@ -36,7 +37,8 @@ func ytdlpExecutor(ytdlpCommand string, args []string, processLine func(line []b
 		line := scanner.Bytes()
 		// If line not empty, try to process it
 		if len(line) > 0 {
-			if err := processLine(line); err != nil {
+			lineProcessError := processLine(line)
+			if lineProcessError != nil {
 				// Processor function can decide to log and continue
 				// Useful for non-JSON warning lines from yt-dlp
 				fmt.Fprintf(os.Stderr, "yt-dlp warning: %s\n", string(line))
@@ -44,13 +46,15 @@ func ytdlpExecutor(ytdlpCommand string, args []string, processLine func(line []b
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error reading yt-dlp output: %w", err)
+	scannerError := scanner.Err()
+	if scannerError != nil {
+		return fmt.Errorf("error reading yt-dlp output: %w", scannerError)
 	}
 
-	if err := cmd.Wait(); err != nil {
+	cmdWaitError := cmd.Wait()
+	if cmdWaitError != nil {
 		// Combine command exit error with captured stderr for a comprehensive message
-		return fmt.Errorf("yt-dlp command failed: %w\n%s", err, string(stderrBytes))
+		return fmt.Errorf("yt-dlp command failed: %w\n%s", cmdWaitError, string(stderrBytes))
 	}
 
 	return nil
