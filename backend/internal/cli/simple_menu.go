@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type SimpleMenuModel struct {
@@ -12,6 +13,11 @@ type SimpleMenuModel struct {
 	selectedChoice string
 	menuPrompt     string
 }
+
+var (
+	selectedItemStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Background(lipgloss.Color("236"))
+	normalItemStyle   = lipgloss.NewStyle()
+)
 
 func NewMainMenuModel() SimpleMenuModel {
 	return SimpleMenuModel{
@@ -76,10 +82,12 @@ func (simpleMenu SimpleMenuModel) View() string {
 
 	for index, menuChoice := range simpleMenu.menuChoices {
 		menuCursor := " "
+		style := normalItemStyle
 		if simpleMenu.cursorPosition == index {
 			menuCursor = ">"
+			style = selectedItemStyle
 		}
-		menuStringView += fmt.Sprintf("%s %s\n", menuCursor, menuChoice)
+		menuStringView += style.Render(fmt.Sprintf("%s %s", menuCursor, menuChoice)) + "\n"
 	}
 	menuStringView += "\n(arrows to move, enter to select, q / esc / CTRL+C to quit)\n"
 	return menuStringView

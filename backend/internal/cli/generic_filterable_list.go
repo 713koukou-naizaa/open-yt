@@ -119,10 +119,12 @@ func (filterableList FilterableListModel) View() string {
 	for index := start; index < end; index++ {
 		itemString := filterableList.filteredItems[index]
 		cursorString := " "
+		style := normalItemStyle
 		if filterableList.cursorPosition == index {
 			cursorString = ">"
+			style = selectedItemStyle
 		}
-		filterableListStringView.WriteString(fmt.Sprintf("%s %s\n", cursorString, itemString))
+		filterableListStringView.WriteString(style.Render(fmt.Sprintf("%s %s", cursorString, itemString)) + "\n")
 	}
 
 	if len(filterableList.filteredItems) == 0 {

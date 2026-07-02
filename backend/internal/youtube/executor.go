@@ -14,7 +14,7 @@ func ytdlpExecutor(ytdlpCommand string, args []string, processLine func(line []b
 	cmd := exec.Command(ytdlpCommand, args...)
 
 	stdout, cmdStdoutPipeError := cmd.StdoutPipe()
-	if err != nil {
+	if cmdStdoutPipeError != nil {
 		return fmt.Errorf("failed to get stdout pipe: %w", cmdStdoutPipeError)
 	}
 
