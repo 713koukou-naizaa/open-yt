@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 )
 
@@ -35,12 +36,15 @@ func SubscriptionsFeed(paginationThreshold int, YTDLPCommand string, browser str
 		return nil, fmt.Errorf("failed to get stderr pipe for subscriptions: %w", cmdStderrPipeError)
 	}
 
-	cmdStdStartError := cmd.Start()
-	if cmdStdStartError != nil {
-		return nil, fmt.Errorf("failed to start yt-dlp command for subscriptions: %w", cmdStdStartError)
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start yt-dlp command for subscriptions: %w", err)
 	}
 
 	var YTVideos []YTVideo
+	// Read stderr first to ensure we capture any error messages if the command fails early.
+	// We can't read it after cmd.Wait() because the pipe will be closed.
+	stderrBytes, _ := io.ReadAll(stderr)
+
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		var currentYTDLPVideo YTDLPVideo
@@ -49,7 +53,7 @@ func SubscriptionsFeed(paginationThreshold int, YTDLPCommand string, browser str
 		currentYTDLPVideoUnmarshallError := json.Unmarshal(line, &currentYTDLPVideo)
 		if currentYTDLPVideoUnmarshallError != nil {
 			// It's possible yt-dlp outputs non-json lines (e.g., warnings about cookies)
-			// For now, continue
+			fmt.Fprintf(os.Stderr, "yt-dlp warning: %s\n", string(line))
 			continue
 		}
 
@@ -60,11 +64,9 @@ func SubscriptionsFeed(paginationThreshold int, YTDLPCommand string, browser str
 		return nil, fmt.Errorf("error reading yt-dlp subscription output: %w", err)
 	}
 
-	cmdWaitError := cmd.Wait()
-	if cmdWaitError != nil {
-		stderrBytes, _ := io.ReadAll(stderr)
+	if err := cmd.Wait(); err != nil {
 		// Provide more informative error message including yt-dlp's output
-		return nil, fmt.Errorf("yt-dlp command for subscriptions failed: %w\n%s", cmdWaitError, string(stderrBytes))
+		return nil, fmt.Errorf("yt-dlp command for subscriptions failed: %w\n%s", err, string(stderrBytes))
 	}
 
 	return YTVideos, nil

@@ -3,10 +3,11 @@ package cli
 // Main Menu Options
 const (
 	// Display values for the main menu
-	menuSearch            = "Search"
-	menuPlay              = "Play"
+	menuHomeFeed          = "Home feed"
 	menuSubscriptions     = "Subscriptions"
 	menuSubscriptionsFeed = "Subscriptions feed"
+	menuSearch            = "Search"
+	menuPlay              = "Play"
 	menuQuit              = "Quit"
 )
 

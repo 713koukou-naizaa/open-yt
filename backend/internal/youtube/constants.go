@@ -1,7 +1,8 @@
 package youtube
 
 const (
-	feedChannelsURL      = "https://www.youtube.com/feed/channels"
-	feedSubscriptionsURL = "https://www.youtube.com/feed/subscriptions"
-	channelURLFormat     = "https://www.youtube.com/channel/%s/%s"
+	BaseURL      	     = "https://www.youtube.com"
+	feedChannelsURL      = BaseURL + "/feed/channels"
+	feedSubscriptionsURL = BaseURL + "/feed/subscriptions"
+	channelURLFormat     = BaseURL + "/channel/%s/%s"
 )

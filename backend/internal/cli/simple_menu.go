@@ -16,10 +16,11 @@ type SimpleMenuModel struct {
 func NewMainMenuModel() SimpleMenuModel {
 	return SimpleMenuModel{
 		menuChoices: []string{
-			menuSearch,
-			menuPlay,
+			menuHomeFeed,
 			menuSubscriptions,
 			menuSubscriptionsFeed,
+			menuSearch,
+			menuPlay,
 			menuQuit,
 		},
 		menuPrompt: "What do you want to do?",

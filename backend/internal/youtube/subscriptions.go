@@ -1,11 +1,8 @@
 package youtube
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
-	"os/exec"
 )
 
 // Fetches the list of channels the user is subscribed to.
@@ -16,53 +13,26 @@ func GetSubscriptions(YTDLPCommand string, YTDLPCookiesBrowser string) ([]YTChan
 	}
 	YTDLPArgs = append(YTDLPArgs, feedChannelsURL)
 
-	cmd := exec.Command(YTDLPCommand, YTDLPArgs...)
-
-	stdout, cmdStdoutPipeError := cmd.StdoutPipe()
-	if cmdStdoutPipeError != nil {
-		return nil, fmt.Errorf("failed to get stdout pipe for subscriptions: %w", cmdStdoutPipeError)
-	}
-
-	stderr, cmdStderrPipeError := cmd.StderrPipe()
-	if cmdStderrPipeError != nil {
-		return nil, fmt.Errorf("failed to get stderr pipe for subscriptions: %w", cmdStderrPipeError)
-	}
-
-	cmdStartError := cmd.Start()
-	if cmdStartError != nil {
-		return nil, fmt.Errorf("failed to start yt-dlp command for subscriptions: %w", cmdStartError)
-	}
-
 	var YTChannels []YTChannel
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
+	processor := func(line []byte) error {
 		var currentYTChannel struct {
 			ID    string `json:"id"`
 			Title string `json:"title"`
 			URL   string `json:"url"`
 		}
-		line := scanner.Bytes()
-
-		currentYTChannelUnmarshallError := json.Unmarshal(line, &currentYTChannel)
-		if currentYTChannelUnmarshallError != nil {
-			continue // Ignore non-JSON lines
+		if err := json.Unmarshal(line, &currentYTChannel); err != nil {
+			return err
 		}
 		YTChannels = append(YTChannels, YTChannel{
 			ID:   currentYTChannel.ID,
 			Name: currentYTChannel.Title,
 			URL:  currentYTChannel.URL,
 		})
+		return nil
 	}
 
-	scannerError := scanner.Err()
-	if scannerError != nil {
-		return nil, fmt.Errorf("error reading yt-dlp subscription output: %w", scannerError)
-	}
-
-	waitError := cmd.Wait()
-	if waitError != nil {
-		stderrBytes, _ := io.ReadAll(stderr)
-		return nil, fmt.Errorf("yt-dlp command for subscriptions failed: %w\n%s", waitError, string(stderrBytes))
+	if err := ytdlpExecutor(YTDLPCommand, YTDLPArgs, processor); err != nil {
+		return nil, fmt.Errorf("subscriptions fetch failed: %w", err)
 	}
 
 	return YTChannels, nil
@@ -80,29 +50,19 @@ func GetChannelUploads(channelID, contentType string, paginationThreshold int, Y
 		channelURLString,
 	}
 
-	cmd := exec.Command(YTDLPCommand, YTDLPArgs...)
-	stdout, cmdStdoutPipeError := cmd.StdoutPipe()
-	if cmdStdoutPipeError != nil {
-		return nil, fmt.Errorf("failed to get stdout pipe for channel uploads: %w", cmdStdoutPipeError)
-	}
-
-	cmdStartError := cmd.Start()
-	if cmdStartError != nil {
-		return nil, fmt.Errorf("failed to start yt-dlp command for channel uploads: %w", cmdStartError)
-	}
-
 	var YTvideos []YTVideo
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
+	processor := func(line []byte) error {
 		var currentYTDLPVideo YTDLPVideo
-		YTDLPVideoUnmarshallError := json.Unmarshal(scanner.Bytes(), &currentYTDLPVideo)
-		if YTDLPVideoUnmarshallError != nil {
-			continue
+		if err := json.Unmarshal(line, &currentYTDLPVideo); err != nil {
+			return err
 		}
 		YTvideos = append(YTvideos, newYTVideoFromYTDLPVideo(currentYTDLPVideo))
+		return nil
 	}
 
-	cmd.Wait() // Wait for command to finish, ignore error as it might fail if playlist is empty
+	if err := ytdlpExecutor(YTDLPCommand, YTDLPArgs, processor); err != nil {
+		return nil, fmt.Errorf("channel uploads fetch failed: %w", err)
+	}
 
 	return YTvideos, nil
 }

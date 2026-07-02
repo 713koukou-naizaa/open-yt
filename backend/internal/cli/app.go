@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"open-yt/internal/config"
 	"open-yt/internal/player"
 	"open-yt/internal/youtube"
-	"os"
 )
 
 type Application struct {
@@ -27,12 +27,6 @@ func (application Application) Run(applicationArgs []string) error {
 	}
 
 	switch applicationArgs[0] {
-	case cmdSearch:
-		return application.runSearch(applicationArgs[1:])
-
-	case cmdPlay:
-		return application.runPlay(applicationArgs[1:])
-
 	case cmdHelp, "-h", "--help":
 		return application.printHelp()
 
@@ -54,6 +48,15 @@ func (a Application) runInteractive() error {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	switch m.selectedChoice {
+	case menuHomeFeed:
+		return a.runHomeFeed()
+
+	case menuSubscriptions:
+		return a.runSubscriptions()
+
+	case menuSubscriptionsFeed:
+		return a.runSubscriptionsFeed()
+
 	case menuSearch:
 		fmt.Print("Enter search query: ")
 		if scanner.Scan() {
@@ -68,16 +71,27 @@ func (a Application) runInteractive() error {
 			return a.runPlay([]string{url})
 		}
 
-	case menuSubscriptions:
-		return a.runSubscriptions()
-
-	case menuSubscriptionsFeed:
-		return a.runSubscriptionsFeed()
-
 	case menuQuit:
 		return nil
 	}
 	return nil
+}
+
+func (a Application) runHomeFeed() error {
+	// Fetch videos
+	fmt.Println("Fetching videos from your home feed...")
+	videos, err := youtube.HomeFeed(a.configuration.PaginationThreshold, a.configuration.YTDLPCommand, a.configuration.CookiesFromBrowser)
+	if err != nil {
+		return err
+	}
+	if len(videos) == 0 {
+		fmt.Println("No videos found in your home feed.")
+		fmt.Println("Please ensure you have configured yt-dlp with cookies for YouTube.")
+		return nil
+	}
+
+	// Select video
+	return a.runInteractiveVideoList(videos)
 }
 
 func (a Application) runSubscriptions() error {
@@ -150,22 +164,6 @@ func (a Application) runSubscriptions() error {
 	return a.runInteractiveVideoList(videos)
 }
 
-func (a Application) runSearch(searchArgs []string) error {
-	if len(searchArgs) == 0 {
-		return fmt.Errorf("usage: open-yt %s <query>", cmdSearch)
-	}
-
-	// Fetch videos
-	query := strings.Join(searchArgs, " ")
-	videos, err := a.searchVideos(query)
-	if err != nil || videos == nil {
-		return err
-	}
-
-	// Select video
-	return a.runInteractiveVideoList(videos)
-}
-
 func (a Application) runSubscriptionsFeed() error {
 	// Fetch videos
 	fmt.Println("Fetching videos from your subscriptions feed...")
@@ -177,6 +175,22 @@ func (a Application) runSubscriptionsFeed() error {
 		fmt.Println("No videos found in your subscriptions feed.")
 		fmt.Println("Please ensure you have configured yt-dlp with cookies for YouTube.")
 		return nil
+	}
+
+	// Select video
+	return a.runInteractiveVideoList(videos)
+}
+
+func (a Application) runSearch(searchArgs []string) error {
+	if len(searchArgs) == 0 {
+		return fmt.Errorf("usage: open-yt %s <query>", cmdSearch)
+	}
+
+	// Fetch videos
+	query := strings.Join(searchArgs, " ")
+	videos, err := a.searchVideos(query)
+	if err != nil || videos == nil {
+		return err
 	}
 
 	// Select video
