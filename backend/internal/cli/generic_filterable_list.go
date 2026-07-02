@@ -60,6 +60,11 @@ func (filterableList FilterableListModel) Update(userMessage tea.Msg) (tea.Model
 				filterableList.filterItems()
 			}
 
+		case " ":
+			filterableList.filterQuery += " "
+			filterableList.filterItems()
+			return filterableList, nil
+
 		case "up", "left":
 			if len(filterableList.filteredItems) > 0 {
 				if filterableList.cursorPosition > 0 {
