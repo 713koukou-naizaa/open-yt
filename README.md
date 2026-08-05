@@ -122,6 +122,7 @@ See the `config.go` file for all available options.
 - [x] External configuration file
 - [ ] Pagination in search results
 - [ ] Playlist support
+- [ ] Native Youtube login ?
 - [ ] Display thumbnails in the terminal
 - [ ] GUI Frontend (Qt/C++?)
 
