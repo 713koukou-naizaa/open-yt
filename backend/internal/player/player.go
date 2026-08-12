@@ -9,6 +9,18 @@ import (
 )
 
 func Play(videoURL string, cfg config.PlayerConfiguration) error {
+	return play(videoURL, cfg, nil)
+}
+
+func PlayPlaylist(playlistURL string, startIndex int, cfg config.PlayerConfiguration, cookiesFromBrowser string) error {
+	additionalArgs := []string{fmt.Sprintf("--playlist-start=%d", startIndex)}
+	if cookiesFromBrowser != "" {
+		additionalArgs = append(additionalArgs, fmt.Sprintf("--ytdl-raw-options=cookies-from-browser=%s", cookiesFromBrowser))
+	}
+	return play(playlistURL, cfg, additionalArgs)
+}
+
+func play(videoURL string, cfg config.PlayerConfiguration, additionalArgs []string) error {
 	MPVArgs := []string{}
 
 	if cfg.YTDLFormat != "" {
@@ -29,6 +41,7 @@ func Play(videoURL string, cfg config.PlayerConfiguration) error {
 	if cfg.ForceWindow != "" {
 		MPVArgs = append(MPVArgs, fmt.Sprintf("--force-window=%s", cfg.ForceWindow))
 	}
+	MPVArgs = append(MPVArgs, additionalArgs...)
 
 	cmd := exec.Command(cfg.Command, append(MPVArgs, videoURL)...)
 

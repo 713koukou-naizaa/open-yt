@@ -35,7 +35,7 @@ func Load() (AppConfiguration, error) {
 	// Set default values for top-level config
 	viper.SetDefault("yt-dlp_command", "yt-dlp")
 	viper.SetDefault("player.command", "mpv") // Default player command
-	viper.SetDefault("player.ytdl_format", "")
+	viper.SetDefault("player.ytdl_format", "bestvideo[height<=?1080]+bestaudio/best[height<=1080]")
 	viper.SetDefault("player.volume", 100)
 	viper.SetDefault("player.fullscreen", "yes")
 	viper.SetDefault("player.window_maximized", "yes")

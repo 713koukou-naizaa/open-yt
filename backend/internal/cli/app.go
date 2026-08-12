@@ -3,8 +3,8 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -56,6 +56,9 @@ func (a Application) runInteractive() error {
 
 	case menuSubscriptionsFeed:
 		return a.runSubscriptionsFeed()
+
+	case menuPlaylists:
+		return a.runPlaylists()
 
 	case menuSearch:
 		fmt.Print("Enter search query: ")
@@ -181,6 +184,71 @@ func (a Application) runSubscriptionsFeed() error {
 	return a.runInteractiveVideoList(videos)
 }
 
+func (a Application) runPlaylists() error {
+	fmt.Println("Fetching your playlists...")
+	playlists, err := youtube.GetPlaylists(a.configuration.PaginationThreshold, a.configuration.YTDLPCommand, a.configuration.CookiesFromBrowser)
+	if err != nil {
+		return err
+	}
+	if len(playlists) == 0 {
+		fmt.Println("No playlists found.")
+		fmt.Println("Please ensure you have configured yt-dlp with cookies for YouTube.")
+		return nil
+	}
+
+	playlistNames := make([]string, len(playlists))
+	playlistMap := make(map[string]youtube.YTPlaylist)
+	for i, playlist := range playlists {
+		displayString := formatPlaylistForList(playlist, i)
+		playlistNames[i] = displayString
+		playlistMap[displayString] = playlist
+	}
+
+	listModel := NewFilterableListModel(playlistNames, "Select a playlist:")
+	p := tea.NewProgram(listModel)
+	finalModel, err := p.Run()
+	if err != nil {
+		return fmt.Errorf("error running playlist selection: %w", err)
+	}
+
+	selectedPlaylistModel := finalModel.(FilterableListModel)
+	if selectedPlaylistModel.shouldGoBack || selectedPlaylistModel.selectedChoice == "" {
+		return a.runInteractive()
+	}
+
+	selectedPlaylist := playlistMap[selectedPlaylistModel.selectedChoice]
+	fmt.Printf("Fetching videos from %s...\n", selectedPlaylist.Title)
+	videos, err := youtube.GetPlaylistVideos(selectedPlaylist.URL, a.configuration.PaginationThreshold, a.configuration.YTDLPCommand, a.configuration.CookiesFromBrowser)
+	if err != nil {
+		return err
+	}
+	if len(videos) == 0 {
+		fmt.Printf("No videos found in %s.\n", selectedPlaylist.Title)
+		return nil
+	}
+
+	actionModel := NewSimpleMenuModel([]string{playlistActionPlayFirst, playlistActionSelectVideo}, "What do you want to play?")
+	p = tea.NewProgram(actionModel)
+	finalModel, err = p.Run()
+	if err != nil {
+		return fmt.Errorf("error running playlist action selection: %w", err)
+	}
+
+	selectedActionModel := finalModel.(SimpleMenuModel)
+	switch selectedActionModel.selectedChoice {
+	case playlistActionPlayFirst:
+		if err := a.playPlaylistVideo(selectedPlaylist.URL, 0); err != nil {
+			return err
+		}
+		return a.runInteractive()
+
+	case playlistActionSelectVideo:
+		return a.runInteractivePlaylistVideoList(videos, selectedPlaylist.URL)
+	}
+
+	return a.runInteractive()
+}
+
 func (a Application) runSearch(searchArgs []string) error {
 	if len(searchArgs) == 0 {
 		return fmt.Errorf("usage: open-yt %s <query>", cmdSearch)
@@ -221,6 +289,28 @@ func (a Application) runInteractiveVideoList(videos []youtube.YTVideo) error {
 	return a.handleSearchResult(m)
 }
 
+func (a Application) runInteractivePlaylistVideoList(videos []youtube.YTVideo, playlistURL string) error {
+	p := tea.NewProgram(newYTSearchModel(videos))
+	finalModel, err := p.Run()
+	if err != nil {
+		return fmt.Errorf("error running interactive playlist video list: %w", err)
+	}
+
+	m := finalModel.(YTSearchModel)
+	if m.shouldGoBack {
+		return a.runInteractive()
+	}
+
+	if m.selectedVideoIndex >= 0 {
+		if err := a.playPlaylistVideo(playlistURL, m.selectedVideoIndex); err != nil {
+			return err
+		}
+		return a.runInteractive()
+	}
+
+	return nil
+}
+
 // Processes result from YTSearchModel bubble
 func (a Application) handleSearchResult(m YTSearchModel) error {
 	// If user chose to go back, re-run main interactive menu
@@ -259,6 +349,10 @@ func (a Application) playVideo(videoURL string) error {
 	return player.Play(videoURL, a.configuration.PlayerConfiguration)
 }
 
+func (a Application) playPlaylistVideo(playlistURL string, startIndex int) error {
+	return player.PlayPlaylist(playlistURL, startIndex, a.configuration.PlayerConfiguration, a.configuration.CookiesFromBrowser)
+}
+
 func (a Application) printHelp() error {
 	fmt.Println(`open-yt
 
@@ -272,4 +366,11 @@ Commands:
   ` + cmdHelp + `      Show this help message`)
 
 	return nil
+}
+
+func formatPlaylistForList(playlist youtube.YTPlaylist, playlistIndex int) string {
+	if playlist.VideoCount > 0 {
+		return fmt.Sprintf("%d. [%d videos] %s", playlistIndex, playlist.VideoCount, playlist.Title)
+	}
+	return fmt.Sprintf("%d. %s", playlistIndex, playlist.Title)
 }

@@ -19,6 +19,14 @@ type YTChannel struct {
 	URL  string
 }
 
+// Holds information about YouTube playlist
+type YTPlaylist struct {
+	ID         string
+	Title      string
+	URL        string
+	VideoCount int
+}
+
 // Holds information about video thumbnail
 type VideoThumbnail struct {
 	URL    string
@@ -44,4 +52,13 @@ type YTDLPVideoThumbnail struct {
 	URL    string `json:"url"`
 	Height int    `json:"height"`
 	Width  int    `json:"width"`
+}
+
+// Used to unmarshal playlist entries from yt-dlp JSON output
+type YTDLPPlaylist struct {
+	ID            string `json:"id"`
+	Title         string `json:"title"`
+	URL           string `json:"url"`
+	WebpageURL    string `json:"webpage_url"`
+	PlaylistCount int    `json:"playlist_count"`
 }

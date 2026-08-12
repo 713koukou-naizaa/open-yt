@@ -12,22 +12,28 @@ type YTSearchModel struct {
 	FilterableListModel
 	allYTVideos           []youtube.YTVideo
 	videoStringYTVideoMap map[string]youtube.YTVideo
+	videoStringIndexMap   map[string]int
 	selectedYTVideo       *youtube.YTVideo
+	selectedVideoIndex    int
 }
 
 func newYTSearchModel(returnedYTVideos []youtube.YTVideo) YTSearchModel {
 	videoStrings := make([]string, 0, len(returnedYTVideos))
 	videoStringYTVideoMap := make(map[string]youtube.YTVideo)
+	videoStringIndexMap := make(map[string]int)
 	for videoIndex, YTVideo := range returnedYTVideos {
 		displayString := formatVideoForList(YTVideo, videoIndex)
 		videoStrings = append(videoStrings, displayString)
 		videoStringYTVideoMap[displayString] = YTVideo
+		videoStringIndexMap[displayString] = videoIndex
 	}
 
 	return YTSearchModel{
 		FilterableListModel:   NewFilterableListModel(videoStrings, "Select a video to play:"),
 		allYTVideos:           returnedYTVideos,
 		videoStringYTVideoMap: videoStringYTVideoMap,
+		videoStringIndexMap:   videoStringIndexMap,
+		selectedVideoIndex:    -1,
 	}
 }
 
@@ -40,6 +46,7 @@ func (YTSearchFilterableList YTSearchModel) Update(userMessage tea.Msg) (tea.Mod
 	if YTSearchFilterableList.selectedChoice != "" {
 		selectedYTVideo := YTSearchFilterableList.videoStringYTVideoMap[YTSearchFilterableList.selectedChoice]
 		YTSearchFilterableList.selectedYTVideo = &selectedYTVideo
+		YTSearchFilterableList.selectedVideoIndex = YTSearchFilterableList.videoStringIndexMap[YTSearchFilterableList.selectedChoice]
 	}
 
 	return YTSearchFilterableList, cmd

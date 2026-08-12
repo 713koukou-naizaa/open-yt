@@ -28,9 +28,11 @@ func ytdlpExecutor(ytdlpCommand string, args []string, processLine func(line []b
 		return fmt.Errorf("failed to start yt-dlp command: %w", cmdStartError)
 	}
 
-	// Read stderr in background to capture any error messages,
-	// especially if command fails early
-	stderrBytes, _ := io.ReadAll(stderr)
+	stderrBytesChan := make(chan []byte, 1)
+	go func() {
+		stderrBytes, _ := io.ReadAll(stderr)
+		stderrBytesChan <- stderrBytes
+	}()
 
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
@@ -52,6 +54,7 @@ func ytdlpExecutor(ytdlpCommand string, args []string, processLine func(line []b
 	}
 
 	cmdWaitError := cmd.Wait()
+	stderrBytes := <-stderrBytesChan
 	if cmdWaitError != nil {
 		// Combine command exit error with captured stderr for a comprehensive message
 		return fmt.Errorf("yt-dlp command failed: %w\n%s", cmdWaitError, string(stderrBytes))

@@ -25,6 +25,7 @@ func NewMainMenuModel() SimpleMenuModel {
 			menuHomeFeed,
 			menuSubscriptions,
 			menuSubscriptionsFeed,
+			menuPlaylists,
 			menuSearch,
 			menuPlay,
 			menuQuit,

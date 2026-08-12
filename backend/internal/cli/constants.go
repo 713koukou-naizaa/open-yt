@@ -6,9 +6,16 @@ const (
 	menuHomeFeed          = "Home feed"
 	menuSubscriptions     = "Subscriptions"
 	menuSubscriptionsFeed = "Subscriptions feed"
+	menuPlaylists         = "Playlists"
 	menuSearch            = "Search"
 	menuPlay              = "Play"
 	menuQuit              = "Quit"
+)
+
+// Playlist Actions
+const (
+	playlistActionPlayFirst   = "Play first video"
+	playlistActionSelectVideo = "Select video"
 )
 
 // Subscription Content Types
