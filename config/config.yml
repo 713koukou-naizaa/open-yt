@@ -1,0 +1,30 @@
+# Command to execute for yt-dlp.
+# Can be an absolute path if it's not in your system's PATH.
+yt-dlp_command: "yt-dlp"
+
+# Browser to extract cookies from for logged-in actions (e.g., subscriptions).
+# Supported values depend on your yt-dlp version.
+# Examples: "firefox", "chrome", "brave", "edge"
+# Leave as an empty string "" to disable.
+cookies_from_browser: "firefox"
+
+# Number of items to fetch for lists (search results, subscription videos, etc.).
+pagination_threshold: 30
+
+# Video player configuration.
+player:
+  # The command to run the player (e.g., mpv, vlc).
+  command: "mpv"
+
+  # (Optional) Set the volume, 0-100.
+  volume: 100
+
+  # (Optional) Video quality format for yt-dlp to request.
+  # Example: "bestvideo[height<=?1080]+bestaudio/best[height<=1080]"
+  ytdl_format: "bestvideo[height<=720]+bestaudio/best[height<=720]"
+
+  # (Optional) Player-specific flags.
+  fullscreen: "yes" # "yes" or "no"
+  window_maximized: "yes" # "yes" or "no"
+  keep_open: "yes" # "yes" or "no"
+  force_window: "yes" # "yes" or "no"

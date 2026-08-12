@@ -105,7 +105,7 @@ You can also use the raw search and play features directly from the command line
 
 ## Configuration
 
-Open-yt can be configured via a YAML file located at `~/.config/open-yt/config.yaml`.
+Open-yt can be configured via a YAML file located at `~/.config/open-yt/config.yml`.
 
 The application will create a default configuration if one is not found. You can customize the `yt-dlp` command, the video player and its arguments, and more.
 
@@ -121,8 +121,8 @@ See the `config.go` file for all available options.
 - [x] Interactive TUI with dynamic filtering
 - [x] External configuration file
 - [ ] Pagination in search results
-- [ ] Playlist support
-- [ ] Native Youtube login ?
+- [x] Playlist support
+- [ ] Native Youtube login ? Via Inntertube ?
 - [ ] Display thumbnails in the terminal
 - [ ] GUI Frontend (Qt/C++?)
 
