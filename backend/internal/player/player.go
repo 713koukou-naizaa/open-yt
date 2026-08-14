@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"open-yt/internal/config"
 )
@@ -13,42 +12,13 @@ func Play(videoURL string, cfg config.PlayerConfiguration) error {
 	return play(videoURL, cfg, nil)
 }
 
-func PlayPlaylist(videoURLs []string, startIndex int, cfg config.PlayerConfiguration, cookiesFromBrowser string) error {
-	if startIndex < 0 || startIndex >= len(videoURLs) {
-		return fmt.Errorf("playlist start index %d is out of range", startIndex)
-	}
-
-	playlistFile, err := os.CreateTemp("", "open-yt-*.m3u")
-	if err != nil {
-		return fmt.Errorf("failed to create temporary playlist: %w", err)
-	}
-	playlistFileName := playlistFile.Name()
-	defer os.Remove(playlistFileName)
-
-	var playlistContent strings.Builder
-	playlistContent.WriteString("#EXTM3U\n")
-	for _, videoURL := range videoURLs[startIndex:] {
-		if strings.ContainsAny(videoURL, "\r\n") {
-			playlistFile.Close()
-			return fmt.Errorf("playlist video URL contains a newline")
-		}
-		playlistContent.WriteString(videoURL)
-		playlistContent.WriteString("\n")
-	}
-
-	if _, err := playlistFile.WriteString(playlistContent.String()); err != nil {
-		playlistFile.Close()
-		return fmt.Errorf("failed to write temporary playlist: %w", err)
-	}
-	if err := playlistFile.Close(); err != nil {
-		return fmt.Errorf("failed to close temporary playlist: %w", err)
-	}
-
-	additionalArgs := []string{}
+func PlayPlaylist(playlistURL string, startIndex int, cfg config.PlayerConfiguration, cookiesFromBrowser string) error {
+	additionalArgs := []string{fmt.Sprintf("--playlist-start=%d", startIndex)}
 	if cookiesFromBrowser != "" {
 		additionalArgs = append(additionalArgs, fmt.Sprintf("--ytdl-raw-options-append=cookies-from-browser=%s", cookiesFromBrowser))
 	}
-	return play(playlistFileName, cfg, additionalArgs)
+	additionalArgs = append(additionalArgs, "--ytdl-raw-options-append=extractor-args=youtube:player_client=default,-tv")
+	return play(playlistURL, cfg, additionalArgs)
 }
 
 func play(videoURL string, cfg config.PlayerConfiguration, additionalArgs []string) error {
