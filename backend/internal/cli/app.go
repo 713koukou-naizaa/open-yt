@@ -237,13 +237,13 @@ func (a Application) runPlaylists() error {
 	selectedActionModel := finalModel.(SimpleMenuModel)
 	switch selectedActionModel.selectedChoice {
 	case playlistActionPlayFirst:
-		if err := a.playPlaylistVideo(selectedPlaylist.URL, 0); err != nil {
+		if err := a.playPlaylistVideo(videos, 0); err != nil {
 			return err
 		}
 		return a.runInteractive()
 
 	case playlistActionSelectVideo:
-		return a.runInteractivePlaylistVideoList(videos, selectedPlaylist.URL)
+		return a.runInteractivePlaylistVideoList(videos)
 	}
 
 	return a.runInteractive()
@@ -289,7 +289,7 @@ func (a Application) runInteractiveVideoList(videos []youtube.YTVideo) error {
 	return a.handleSearchResult(m)
 }
 
-func (a Application) runInteractivePlaylistVideoList(videos []youtube.YTVideo, playlistURL string) error {
+func (a Application) runInteractivePlaylistVideoList(videos []youtube.YTVideo) error {
 	p := tea.NewProgram(newYTSearchModel(videos))
 	finalModel, err := p.Run()
 	if err != nil {
@@ -302,7 +302,7 @@ func (a Application) runInteractivePlaylistVideoList(videos []youtube.YTVideo, p
 	}
 
 	if m.selectedVideoIndex >= 0 {
-		if err := a.playPlaylistVideo(playlistURL, m.selectedVideoIndex); err != nil {
+		if err := a.playPlaylistVideo(videos, m.selectedVideoIndex); err != nil {
 			return err
 		}
 		return a.runInteractive()
@@ -349,8 +349,12 @@ func (a Application) playVideo(videoURL string) error {
 	return player.Play(videoURL, a.configuration.PlayerConfiguration)
 }
 
-func (a Application) playPlaylistVideo(playlistURL string, startIndex int) error {
-	return player.PlayPlaylist(playlistURL, startIndex, a.configuration.PlayerConfiguration, a.configuration.CookiesFromBrowser)
+func (a Application) playPlaylistVideo(videos []youtube.YTVideo, startIndex int) error {
+	videoURLs := make([]string, 0, len(videos))
+	for _, video := range videos {
+		videoURLs = append(videoURLs, video.URL)
+	}
+	return player.PlayPlaylist(videoURLs, startIndex, a.configuration.PlayerConfiguration, a.configuration.CookiesFromBrowser)
 }
 
 func (a Application) printHelp() error {
