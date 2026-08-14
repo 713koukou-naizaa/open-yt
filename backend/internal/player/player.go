@@ -15,9 +15,8 @@ func Play(videoURL string, cfg config.PlayerConfiguration) error {
 func PlayPlaylist(playlistURL string, startIndex int, cfg config.PlayerConfiguration, cookiesFromBrowser string) error {
 	additionalArgs := []string{fmt.Sprintf("--playlist-start=%d", startIndex)}
 	if cookiesFromBrowser != "" {
-		additionalArgs = append(additionalArgs, fmt.Sprintf("--ytdl-raw-options-append=cookies-from-browser=%s", cookiesFromBrowser))
+		additionalArgs = append(additionalArgs, fmt.Sprintf("--ytdl-raw-options=cookies-from-browser=%s", cookiesFromBrowser))
 	}
-	additionalArgs = append(additionalArgs, "--ytdl-raw-options-append=extractor-args=youtube:player_client=default,-tv")
 	return play(playlistURL, cfg, additionalArgs)
 }
 
